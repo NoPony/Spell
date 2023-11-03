@@ -2,110 +2,91 @@ using Spell.Core;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using System.Windows.Forms;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Spell.Forms.Main
 {
     public partial class MainView : Form, IMainView
     {
-        public IObservable<string> QueryChange() => _queryChangeSubject.AsObservable();
-        private readonly IObservable<EventPattern<EventArgs>> _onQueryChange;
-        private readonly ISubject<string> _queryChangeSubject;
+        private readonly ColumnHeader[] _columns = new ColumnHeader[]
+        {
+            new() { DisplayIndex = 0, Text = "Value", Width = 200 },
+            new() { DisplayIndex = 1, Text = "Score" },
+            new() { DisplayIndex = 2, Text = "Token" },
+            new() { DisplayIndex = 3, Text = "Distance" },
+            new() { DisplayIndex = 4, Text = "First" }
+        };
 
-        public IObservable<FormClosedEventArgs> Exit() => _exitSubject.AsObservable();
-        private readonly IObservable<EventPattern<FormClosedEventArgs>> _onExit;
-        private readonly ISubject<FormClosedEventArgs> _exitSubject;
+        private readonly IObservable<EventPattern<EventArgs>> _onQueryChange;
+        private readonly IObservable<EventPattern<FormClosedEventArgs>> _onClosed;
 
         private readonly List<IDisposable> _subscriptions;
 
-        internal MainView()
+        public IObservable<string> QueryChanged => _onQueryChange.Select(i => textQuery.Text);
+        public IObservable<FormClosedEventArgs> ViewClosed => _onClosed.Select(i => i.EventArgs);
+
+        public MainView()
         {
             InitializeComponent();
 
-            _subscriptions = new List<IDisposable>();
+            listResult.Columns.AddRange(_columns);
 
-            _queryChangeSubject = new ReplaySubject<string>(1);
             _onQueryChange = Observable.FromEventPattern<EventArgs>(textQuery, "TextChanged");
-            _subscriptions.Add(_onQueryChange.Subscribe(e => _queryChangeSubject.OnNext(textQuery.Text)));
+            _onClosed = Observable.FromEventPattern<FormClosedEventArgs>(this, "FormClosed");
 
-            _exitSubject = new Subject<FormClosedEventArgs>();
-            _onExit = Observable.FromEventPattern<FormClosedEventArgs>(this, "FormClosed");
-            _subscriptions.Add(_onExit.Subscribe(e => _exitSubject.OnNext(e.EventArgs)));
-
-            listResult.Columns.AddRange(new ColumnHeader[]
+            _subscriptions = new List<IDisposable>
             {
-                ValueColumnHeader,
-                ScoreColumnHeader,
-                TokenColumnHeader,
-                DistanceColumnHeader,
-                FirstColumnHeader
-            });
+                _onClosed.Subscribe(e => OnFormClosed(e.Sender, e.EventArgs))
+            };
         }
 
-        public void Open() =>
+        void IMainView.Show()
+        {
             Show();
+        }
 
-        void IMainView.Close() =>
+        void IMainView.Close()
+        {
             Close();
+        }
 
-        public void SetQuery(IObservable<string> observable) =>
-            _subscriptions.Add(observable.Subscribe(i => textQuery.Text = i));
+        public void SetQuery(string value)
+        {
+            throw new NotImplementedException();
+        }
 
-        public void SetResult(IObservable<IEnumerable<Result>> observable) => _subscriptions.Add(observable.Subscribe(
-            next =>
-            {
-                listResult.Items.Clear();
-                listResult.Items.AddRange(next
-                    .Select((i, r) => new ListViewItem(new string[]
-                    {
-                        i.Value,
-                        $"{i.Score}",
-                        $"{i.TokenScore}",
-                        $"{i.Distance}",
-                        $"{i.FirstLetter}",
-                    }))
-                    .ToArray());
-            }));
+        public void SetMatchText(string value)
+        {
+            MatchText.Text = value;
+        }
 
-        private void Exit(object? sender, FormClosedEventArgs e)
+        public void SetSuggestions(IEnumerable<Suggestion> value)
+        {
+            listResult.Items.Clear();
+            listResult.Items.AddRange(
+                value.Select(
+                    i => new ListViewItem(
+                        new string[]
+                        {
+                            i.Value,
+                            $"{i.Confidence}",
+                            $"{i.BigramSearchScore}",
+                            $"{i.LevenshteinDistance}",
+                            $"{i.FirstLetterMatch}",
+                        }))
+                .ToArray());
+        }
+
+        public void SetStatus(string status)
+        {
+            StatusLabel.Text = status;
+        }
+
+        private void OnFormClosed(object? sender, FormClosedEventArgs e)
         {
             _subscriptions.ForEach(s => s.Dispose());
             _subscriptions.Clear();
-
-            _exitSubject.OnNext(e);
         }
 
-        // Result list column definitions
-        // !! KEEP SORTED !!
-        private static ColumnHeader ValueColumnHeader => new()
-        {
-            DisplayIndex = 0,
-            Text = "Value",
-            Width = 200
-        };
-
-        private static ColumnHeader ScoreColumnHeader => new()
-        {
-            DisplayIndex = 1,
-            Text = "Score"
-        };
-
-        private static ColumnHeader TokenColumnHeader => new()
-        {
-            DisplayIndex = 2,
-            Text = "Token"
-        };
-
-        private static ColumnHeader DistanceColumnHeader => new()
-        {
-            DisplayIndex = 3,
-            Text = "Distance"
-        };
-
-        private static ColumnHeader FirstColumnHeader => new()
-        {
-            DisplayIndex = 4,
-            Text = "First"
-        };
     }
 }

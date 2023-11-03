@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Spell.Core
+namespace Spell.Core.Indices.Bigram.DiscreteBigram
 {
-    internal class DiscreteValueList
+    internal class DiscreteBigramIndex
     {
         private readonly Dictionary<string, int> _index;
         private readonly List<string> _values;
         private int _count;
 
-        internal DiscreteValueList()
+        internal DiscreteBigramIndex()
         {
             _index = new Dictionary<string, int>();
             _values = new List<string>();

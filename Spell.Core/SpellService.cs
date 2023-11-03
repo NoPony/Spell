@@ -1,4 +1,5 @@
 ﻿using Spell.Core.Extensions;
+using Spell.Core.Indices.Bigram.BigramSearch;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,49 +8,71 @@ namespace Spell.Core
 {
     public class SpellService
     {
-        private readonly TokenIndex _index;
+        private readonly HashSet<string> _words;
+        private readonly BigramSearchIndex _index;
 
         public SpellService()
         {
-            _index = new TokenIndex();
+            _words = new HashSet<string>();
+            _index = new BigramSearchIndex();
 
-            foreach (string word in new StringReader(Words.words_alpha).Lines())
+            IEnumerable<string> words = new StringReader(Words.words_alpha)
+                .Lines()
+                .Select(i => i.ToLowerInvariant());
+
+            foreach (string word in words)
+            {
+                _words.Add(word);
                 _index.Insert(word);
+            }
         }
 
-        public IEnumerable<Result> Check(string word)
-        {
-            IEnumerable<TokenResult> bigramResults = _index.Probe(word);
-            
-            int maxScore = bigramResults.Any()
-                ? bigramResults.Max(i  => i.Score)
-                : 0;
+        //public IEnumerable<string> CheckDocument(string document)
+        //{
 
-            return bigramResults
-                .Where(i => i.Score > maxScore - 3)
+        //}
+
+        public MatchResult CheckWord(string word)
+        {
+            if (string.IsNullOrWhiteSpace(word))
+                return new MatchResult
+                {
+                    Match = false,
+                    Suggestions = Enumerable.Empty<Suggestion>()
+                };
+
+            string input = word.ToLowerInvariant();
+
+            if (_words.Contains(input))
+                return new MatchResult
+                {
+                    Match = true,
+                    Suggestions = Enumerable.Empty<Suggestion>()
+                };
+
+            IEnumerable<BigramSearchResult> bigramResults = _index.Probe(input);
+
+            return new MatchResult
+            {
+                Match = false,
+                Suggestions = bigramResults
                 .Take(32)
                 .Select(i => new
                 {
                     i.Score,
-                    Value = _index.Document(i.Index),
+                    Value = _index.Word(i.Index),
                 })
-                .Select(i => new
-                {
-                    i.Value,
-                    TokenScore = i.Score,
-                    Distance = word.LevenshteinDistance(i.Value),
-                    FirstLetter = word[0] == i.Value[0],
-                })
-                .Select(i => new Result
+                .Select(i => new Suggestion
                 {
                     Value = i.Value,
-                    TokenScore = i.TokenScore,
-                    Distance = i.Distance,
-                    FirstLetter = i.FirstLetter,
-                    Score = 0,
+                    BigramSearchScore = i.Score,
+                    LevenshteinDistance = input.LevenshteinDistance(i.Value),
+                    FirstLetterMatch = input[0] == i.Value[0],
+                    Confidence = 0,
                 })
-                .OrderBy(i => i.Distance)
-                .Take(7);
+                .OrderBy(i => i.LevenshteinDistance)
+                .Take(7)
+            };
         }
     }
 }
