@@ -54,12 +54,18 @@ namespace Spell.Test.Extensions
         [Fact]
         public void Match1()
         {
-            Assert.Equal(1, "A".LevenshteinDistance("B"));
+            Assert.Equal(1, "A".LevenshteinDistance("AB"));
             Assert.Equal(1, "AB".LevenshteinDistance("A"));
-            Assert.Equal(1, "AB".LevenshteinDistance("B"));
-            Assert.Equal(1, "ABCDEF".LevenshteinDistance("XBCDEF"));
-            Assert.Equal(1, "ABCDEF".LevenshteinDistance("ABCDEX"));
-            Assert.Equal(1, "ABCDEF".LevenshteinDistance("BCDEF"));
+            Assert.Equal(1, "ABC".LevenshteinDistance("AC"));
+            Assert.Equal(1, "ABC".LevenshteinDistance("AxC"));
+            Assert.Equal(1, "ABCDEF".LevenshteinDistance("xBCDEF"));
+            Assert.Equal(1, "ABCDEF".LevenshteinDistance("ABCDEx"));
+        }
+
+        [Fact]
+        public void Match3()
+        {
+            Assert.Equal(3, "ABCDEF".LevenshteinDistance("BCE"));
         }
     }
 }
