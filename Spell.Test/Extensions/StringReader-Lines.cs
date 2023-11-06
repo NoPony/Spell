@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Spell.Core.Extensions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,7 +12,7 @@ namespace Spell.Test.Extensions
         [Fact]
         public void CleanInput()
         {
-            StringReader sr = new StringReader("abc\r\ndef\nghi");
+            StringReader sr = new("abc\r\ndef\nghi");
 
             string[] expected =
             {
@@ -19,12 +20,14 @@ namespace Spell.Test.Extensions
                 "def",
                 "ghi"
             };
+
+            Assert.Equal(expected, sr.Lines());
         }
 
         [Fact]
         public void LeadingEmpty()
         {
-            StringReader sr = new StringReader("\r\nabc\r\ndef\nghi");
+            StringReader sr = new("\r\nabc\r\ndef\nghi");
 
             string[] expected =
             {
@@ -32,12 +35,14 @@ namespace Spell.Test.Extensions
                 "def",
                 "ghi"
             };
+
+            Assert.Equal(expected, sr.Lines());
         }
 
         [Fact]
         public void TrailingEmpty()
         {
-            StringReader sr = new StringReader("abc\r\ndef\nghi\r\n");
+            StringReader sr = new("abc\r\ndef\nghi\r\n");
 
             string[] expected =
             {
@@ -45,12 +50,14 @@ namespace Spell.Test.Extensions
                 "def",
                 "ghi"
             };
+
+            Assert.Equal(expected, sr.Lines());
         }
 
         [Fact]
         public void MiddleEmpty()
         {
-            StringReader sr = new StringReader("abc\r\n\r\nndef\n\nghi");
+            StringReader sr = new("abc\r\n\r\ndef\n\nghi");
 
             string[] expected =
             {
@@ -58,6 +65,9 @@ namespace Spell.Test.Extensions
                 "def",
                 "ghi"
             };
+
+
+            Assert.Equal(expected, sr.Lines());
         }
     }
 }
