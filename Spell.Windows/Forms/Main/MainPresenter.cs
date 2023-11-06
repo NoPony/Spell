@@ -1,56 +1,91 @@
 ﻿using Spell.Core;
+using System.Diagnostics;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
 namespace Spell.Forms.Main
 {
-    internal class MainPresenter
+    public class MainPresenter
     {
         private readonly IMainView _view;
         private readonly MainModel _model;
 
-        private readonly SpellService _spellCheck;
+        private readonly SpellService _spell;
 
         private readonly List<IDisposable> _subscriptions;
 
-        internal IObservable<EventArgs> Exit() => _exit;
-        private readonly ISubject<EventArgs> _exit;
+        internal IObservable<EventArgs> Closed => _closed.AsObservable();
+        private readonly ISubject<EventArgs> _closed;
 
-        internal MainPresenter()
+        public MainPresenter(MainModel model, IMainView view)
         {
-            _model = new MainModel();
-            _view = new MainView();
+            _model = model ?? throw new ArgumentNullException(nameof(model));
+            _view = view ?? throw new ArgumentNullException(nameof(view));
 
-            _exit = new Subject<EventArgs>();
+            _spell = new SpellService();
 
-            _spellCheck = new SpellService();
+            _closed = new Subject<EventArgs>();
+
             _subscriptions = new List<IDisposable>
             {
-                _model.Query().Subscribe(i => Model_QueryChange(i)),
-                _view.QueryChange().Subscribe(i => View_QueryChange(i)),
-                _view.Exit().Subscribe(i => View_Exit(i))
+                _model.Query.Subscribe(Model_QueryChange),
+                _model.Result.Subscribe(Model_ResultChange),
+                _model.Status.Subscribe(Model_StatusChange),
+
+                _view.QueryChanged.Subscribe(View_QueryChanged),
+                _view.ViewClosed.Subscribe(View_Closed)
             };
 
-            _view.SetResult(_model.Result());
+            //_model.Query.OnNext("");
+            //_model.Result.OnNext(Enumerable.Empty<Suggestion>());
+            //_model.Status.OnNext("Ready.");
         }
 
-        internal void Open() => _view
-            .Open();
+        internal void Show()
+        {
+            _view.Show();
 
-        private void Model_QueryChange(string query) => _model
-            .Result()
-            .OnNext(_spellCheck.Check(query));
+            _model.Query.OnNext("");
+            _model.Result.OnNext(Enumerable.Empty<Suggestion>());
+            _model.Status.OnNext("Ready.");
+        }
 
-        private void View_QueryChange(string query) => _model
-            .Query()
-            .OnNext(query);
+        private void Model_QueryChange(string query)
+        {
+            Stopwatch sw = Stopwatch.StartNew();
 
-        private void View_Exit(FormClosedEventArgs e)
+            MatchResult result = _spell.CheckWord(query);
+            
+            sw.Stop();
+            _view.SetMatchText(result.Match
+                ? "Match found!"
+                : "Suggestions:");
+
+            _model.Result.OnNext(result.Suggestions);
+            _model.Status.OnNext($"Completed in {sw.Elapsed.TotalMilliseconds}ms.");
+        }
+
+        private void Model_ResultChange(IEnumerable<Suggestion> suggestions)
+        {
+            _view.SetSuggestions(suggestions);
+        }
+
+        private void Model_StatusChange(string status)
+        {
+            _view.SetStatus(status);
+        }
+
+        private void View_QueryChanged(string query)
+        {
+            _model.Query.OnNext(query);
+        }
+
+        private void View_Closed(FormClosedEventArgs e)
         {
             _subscriptions.ForEach(s => s.Dispose());
             _subscriptions.Clear();
 
-            _exit.OnNext(e);
+            _closed.OnNext(e);
         }
     }
 }

@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Spell.Core", "Spell.Core\Sp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Spell.Windows", "Spell.Windows\Spell.Windows.csproj", "{1CF903A2-69CB-434E-96DD-1D4E2BC8609D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Spell.Test", "Spell.Test\Spell.Test.csproj", "{AAFC48EE-54BB-498D-9BD3-DC1ED9B687A6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{1CF903A2-69CB-434E-96DD-1D4E2BC8609D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1CF903A2-69CB-434E-96DD-1D4E2BC8609D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1CF903A2-69CB-434E-96DD-1D4E2BC8609D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AAFC48EE-54BB-498D-9BD3-DC1ED9B687A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AAFC48EE-54BB-498D-9BD3-DC1ED9B687A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AAFC48EE-54BB-498D-9BD3-DC1ED9B687A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AAFC48EE-54BB-498D-9BD3-DC1ED9B687A6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

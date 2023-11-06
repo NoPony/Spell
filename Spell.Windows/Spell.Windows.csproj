@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="newtonsoft.json" Version="13.0.3" />
+    <PackageReference Include="autofac" Version="7.1.0" />
     <PackageReference Include="system.reactive" Version="5.0.0" />
   </ItemGroup>
 

@@ -1,38 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Spell.Core
+namespace Spell.Core.Indices.Bigram.DiscreteBigram
 {
-    internal class DiscreteValueList
+    internal class DiscreteBigramIndex
     {
         private readonly Dictionary<string, int> _index;
-        private readonly List<string> _values;
         private int _count;
 
-        internal DiscreteValueList()
+        internal DiscreteBigramIndex()
         {
             _index = new Dictionary<string, int>();
-            _values = new List<string>();
             _count = 0;
         }
 
-        internal int Key(string value)
+        internal int ProbeSert(string value)
         {
             if (_index.TryGetValue(value, out var index))
                 return index;
 
             _index.Add(value, _count);
-            _values.Add(value);
 
             return _count++;
         }
 
-        internal string Value(int key)
+        internal int Probe(string value)
         {
-            if (key > _count)
-                throw new ArgumentOutOfRangeException(nameof(key));
+            if (_index.TryGetValue(value, out var index))
+                return index;
 
-            return _values[key];
+            throw new KeyNotFoundException(value);
         }
     }
 }

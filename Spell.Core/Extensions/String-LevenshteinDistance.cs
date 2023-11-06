@@ -2,7 +2,7 @@
 
 namespace Spell.Core.Extensions
 {
-    internal static class String_Distance
+    internal static class String_LevenshteinDistance
     {
         internal static int LevenshteinDistance(this string source, string target)
         {

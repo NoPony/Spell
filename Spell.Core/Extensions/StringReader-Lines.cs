@@ -10,7 +10,8 @@ namespace Spell.Core.Extensions
             string line;
 
             while ((line = reader.ReadLine()) != null)
-                yield return line;
+                if (!string.IsNullOrWhiteSpace(line))
+                    yield return line;
         }
     }
 }
