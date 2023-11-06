@@ -66,6 +66,7 @@ namespace Spell.Test.Extensions
         public void Match3()
         {
             Assert.Equal(3, "ABCDEF".LevenshteinDistance("BCE"));
+            Assert.Equal(3, "BCE".LevenshteinDistance("ABCDEF"));
         }
     }
 }
