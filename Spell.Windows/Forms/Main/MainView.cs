@@ -1,8 +1,6 @@
 using Spell.Core;
 using System.Reactive;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Spell.Forms.Main
 {
@@ -17,13 +15,13 @@ namespace Spell.Forms.Main
             new() { DisplayIndex = 4, Text = "First" }
         };
 
-        private readonly IObservable<EventPattern<EventArgs>> _onQueryChange;
-        private readonly IObservable<EventPattern<FormClosedEventArgs>> _onClosed;
+        private readonly IObservable<EventPattern<EventArgs>> _queryChanged;
+        private readonly IObservable<EventPattern<FormClosedEventArgs>> _formClosed;
 
         private readonly List<IDisposable> _subscriptions;
 
-        public IObservable<string> QueryChanged => _onQueryChange.Select(i => textQuery.Text);
-        public IObservable<FormClosedEventArgs> ViewClosed => _onClosed.Select(i => i.EventArgs);
+        public IObservable<string> QueryChanged => _queryChanged.Select(i => textQuery.Text);
+        public IObservable<FormClosedEventArgs> ViewClosed => _formClosed.Select(i => i.EventArgs);
 
         public MainView()
         {
@@ -31,12 +29,12 @@ namespace Spell.Forms.Main
 
             listResult.Columns.AddRange(_columns);
 
-            _onQueryChange = Observable.FromEventPattern<EventArgs>(textQuery, "TextChanged");
-            _onClosed = Observable.FromEventPattern<FormClosedEventArgs>(this, "FormClosed");
+            _queryChanged = Observable.FromEventPattern<EventArgs>(textQuery, "TextChanged");
+            _formClosed = Observable.FromEventPattern<FormClosedEventArgs>(this, "FormClosed");
 
             _subscriptions = new List<IDisposable>
             {
-                _onClosed.Subscribe(e => OnFormClosed(e.Sender, e.EventArgs))
+                _formClosed.Subscribe(e => Form_Closed(e.Sender, e.EventArgs))
             };
         }
 
@@ -82,11 +80,10 @@ namespace Spell.Forms.Main
             StatusLabel.Text = status;
         }
 
-        private void OnFormClosed(object? sender, FormClosedEventArgs e)
+        private void Form_Closed(object? sender, FormClosedEventArgs e)
         {
             _subscriptions.ForEach(s => s.Dispose());
             _subscriptions.Clear();
         }
-
     }
 }

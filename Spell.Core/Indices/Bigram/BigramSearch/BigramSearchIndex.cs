@@ -26,7 +26,7 @@ namespace Spell.Core.Indices.Bigram.BigramSearch
 
             foreach (string bigram in word.Bigrams())
             {
-                int key = _discreteBigrams.Key(bigram);
+                int key = _discreteBigrams.ProbeSert(bigram);
 
                 if (_bigramInstances.TryGetValue(key, out List<int> documentIds))
                     documentIds.Add(_wordCount);
@@ -43,17 +43,63 @@ namespace Spell.Core.Indices.Bigram.BigramSearch
             if (query.Length < 2)
                 return Enumerable.Empty<BigramSearchResult>();
 
-            return query.Bigrams()
-                .Select(i => _discreteBigrams.Key(i))
-                .Select(i => _bigramInstances[i])
-                .SelectMany(i => i, (k, v) => v)
-                .GroupBy(i => i, (k, v) => new BigramSearchResult { Index = k, Score = v.Count() })
-                .OrderByDescending(i => i.Score);
+            try
+            {
+                IEnumerable<string> bigrams = GetBigrams(query);
+                IEnumerable<int> bigramIndices = GetOrdinals(bigrams).ToList();
+                IEnumerable<List<int>> bigramInstances = GetInstances(bigramIndices);
+                IEnumerable<int> flatBigramInstances = FlattenInstances(bigramInstances);
+                IEnumerable<BigramSearchResult> instancesPerWord = GroupByWords(flatBigramInstances);
+                IEnumerable<BigramSearchResult> scorePositive = FilterUnmatched(instancesPerWord);
+                IOrderedEnumerable<BigramSearchResult> bigramSearchResults = SortResult(scorePositive);
+
+                return bigramSearchResults;
+            }
+
+            catch (KeyNotFoundException)
+            {
+                return Enumerable.Empty<BigramSearchResult>();
+            }
         }
 
         public string Word(int index)
         {
             return _wordList[index];
+        }
+
+        private static IEnumerable<string> GetBigrams(string query)
+        {
+            return query.Bigrams();
+        }
+
+        private IEnumerable<int> GetOrdinals(IEnumerable<string> bigrams)
+        {
+            return bigrams.Select(i => _discreteBigrams.Probe(i));
+        }
+
+        private IEnumerable<List<int>> GetInstances(IEnumerable<int> bigramIndecies)
+        {
+            return bigramIndecies.Select(i => _bigramInstances[i]);
+        }
+
+        private static IEnumerable<int> FlattenInstances(IEnumerable<List<int>> bigramInstances)
+        {
+            return bigramInstances.SelectMany(i => i, (k, v) => v);
+        }
+
+        private static IEnumerable<BigramSearchResult> GroupByWords(IEnumerable<int> flatBigramInstances)
+        {
+            return flatBigramInstances.GroupBy(i => i, (k, v) => new BigramSearchResult { Index = k, Score = v.Count() });
+        }
+
+        private static IEnumerable<BigramSearchResult> FilterUnmatched(IEnumerable<BigramSearchResult> instancesPerWord)
+        {
+            return instancesPerWord.Where(i => i.Score > 0);
+        }
+
+        private static IOrderedEnumerable<BigramSearchResult> SortResult(IEnumerable<BigramSearchResult> scorePositive)
+        {
+            return scorePositive.OrderByDescending(i => i.Score);
         }
     }
 }

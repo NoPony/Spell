@@ -57,6 +57,9 @@ namespace Spell.Forms.Main
             MatchResult result = _spell.CheckWord(query);
             
             sw.Stop();
+            _view.SetMatchText(result.Match
+                ? "Match found!"
+                : "Suggestions:");
 
             _model.Result.OnNext(result.Suggestions);
             _model.Status.OnNext($"Completed in {sw.Elapsed.TotalMilliseconds}ms.");

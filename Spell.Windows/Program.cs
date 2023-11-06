@@ -1,5 +1,4 @@
 using Autofac;
-using Microsoft.VisualBasic.Logging;
 using Spell.Forms.Main;
 using System.Reflection;
 
